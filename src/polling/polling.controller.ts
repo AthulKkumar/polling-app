@@ -7,44 +7,81 @@ import {
   Param,
   Delete,
   UseGuards,
+  ValidationPipe,
 } from '@nestjs/common';
 import { PollingService } from './polling.service';
 import { CreatePollingDto } from './dto/create-polling.dto';
 import { UpdatePollingDto } from './dto/update-polling.dto';
+import { VotePollingDto } from './dto/vote-polling.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { Role } from 'src/user/user.types';
 import { RolesGuard } from 'src/auth/roles.guard';
+import { CurrentUser } from 'src/auth/current-user.decorator';
+import type { UserPayload } from './polling.service';
 
 @Controller('polling')
+@UseGuards(AuthGuard)
 export class PollingController {
   constructor(private readonly pollingService: PollingService) {}
 
   @Post()
-  @UseGuards(AuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  create() {
-    return 'Test Data';
-    // return this.pollingService.create(createPollingDto);
+  async create(
+    @Body(ValidationPipe) createPollingDto: CreatePollingDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return await this.pollingService.create(createPollingDto, user);
   }
 
   @Get()
-  findAll() {
-    return this.pollingService.findAll();
+  async findAll(@CurrentUser() user: UserPayload) {
+    return await this.pollingService.findAll(user);
+  }
+
+  @Get('my-polls')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  async getMyPolls(@CurrentUser() user: UserPayload) {
+    return await this.pollingService.getMyPolls(user);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.pollingService.findOne(+id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    return await this.pollingService.findOne(id, user);
+  }
+
+  @Get(':id/results')
+  async getResults(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    return await this.pollingService.getResults(id, user);
+  }
+
+  @Post(':id/vote')
+  async vote(
+    @Param('id') id: string,
+    @Body(ValidationPipe) voteDto: VotePollingDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return await this.pollingService.vote(id, voteDto, user);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePollingDto: UpdatePollingDto) {
-    return this.pollingService.update(+id, updatePollingDto);
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  async update(
+    @Param('id') id: string,
+    @Body(ValidationPipe) updatePollingDto: UpdatePollingDto,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return await this.pollingService.update(id, updatePollingDto, user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.pollingService.remove(+id);
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  async remove(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    await this.pollingService.remove(id, user);
+    return { message: 'Poll deleted successfully' };
   }
 }
