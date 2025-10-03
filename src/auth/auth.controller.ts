@@ -16,17 +16,18 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() registerUserDto: RegisterUserDto) {
-    const token = await this.authService.registerUser(registerUserDto);
-    return { accessToken: token };
+    const { token, userId, role } =
+      await this.authService.registerUser(registerUserDto);
+    return { accessToken: token, userId, role };
   }
 
   @Post('login')
   async login(@Body() registerUserDto: any) {
-    const token = await this.authService.loginUser(
+    const { token, userId, role } = await this.authService.loginUser(
       registerUserDto.email,
       registerUserDto.password,
     );
-    return { accessToken: token };
+    return { accessToken: token, userId, role };
   }
 
   @UseGuards(AuthGuard)
