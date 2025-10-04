@@ -20,7 +20,7 @@ A full-stack polling application that allows users to vote on polls created by a
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
+- Node.js (v18 or higher)
 - MongoDB
 - npm or yarn
 
